@@ -141,18 +141,13 @@ translate:
   dec ecx       ;decrement raw byte count
   jnz translate ;loop (jump to translate) if bytes remain
 
-;write output from output buffer
-  mov eax, 4    ;code 4 = sys_write
-  mov ebx, 1    ;file 1 = stdout
-  mov ecx, outBuff  ;pass output buffer addr
-  mov edx, ebp  ;pass num bytes to write
-  int 80h       ;make kernel call
+  call printBuff  ;print outBuff
   jmp read      ;loop (jump to read) to read more
 
 ;print error message
 inputErr:
   mov eax, 4    ;code 4 = sys_write
-  mov ebx, 1    ;file 2 = stderr
+  mov ebx, 2    ;file 2 = stderr
   mov ecx, inputErrMsg  ;pass error message addr
   mov edx, inputErrLen  ;pass error message length
   int 80h       ;make kernel call
@@ -161,7 +156,7 @@ inputErr:
 ;print error message
 parityErr:
   mov eax, 4    ;code 4 = sys_write
-  mov ebx, 1    ;file 2 = stderr
+  mov ebx, 2    ;file 2 = stderr
   mov ecx, parityErrMsg ;pass error message addr
   mov edx, parityErrLen ;pass error message length
   int 80h       ;make kernel call
@@ -171,3 +166,21 @@ exit:
   mov eax, 1  ;code 1 = sys_exit
   mov ebx, 0  ;ret 0 = normal
   int 80h     ;make kernel call
+
+;-------------------------------------------------------------------------------
+;       Name : printBuff
+; Parameters : EDX - number of bytes to write
+;    Returns : none
+;   Modifies : none
+;      Calls : none
+;Description : Prints EDX bytes from outBuff to stdout
+
+printBuff:
+  pushad        ;save caller's registers
+  mov eax, 4    ;code 4 = sys_write
+  mov ebx, 1    ;file 1 = stdout
+  mov ecx, outBuff  ;pass output buffer addr
+  mov edx, ebp  ;pass num bytes to write
+  int 80h       ;make kernel call
+  popad         ;restore caller's registers
+  ret           ;return
