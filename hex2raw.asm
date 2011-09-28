@@ -17,8 +17,9 @@
 ;   hex2raw < [input file] > [output file]
 ;
 ;Build using these commands:
+;   nasm -f elf -g -F stabs h2rlib.asm
 ;   nasm -f elf -g -F stabs hex2raw.asm
-;   ld -o hex2raw hex2raw.o
+;   ld -o hex2raw hex2raw.o h2rlib.o
 
 SECTION .data           ;initialized data
 
@@ -38,14 +39,14 @@ SECTION .text           ;code
 ;------------------------------------------------------------------------------
 
 GLOBAL _start           ;for the linker
-EXTERN sanitize, translate, loadBuff, printBuff
-EXTERN inBuff, outBuff
+EXTERN sanitize, translate, loadBuf, printBuf
+EXTERN inBuf, outBuf
 
 _start:
   nop                   ;for gdb
 
 ;read input to input buffer
-  call loadBuff         ;call buffer-reading procedure
+  call loadBuf          ;call buffer-reading procedure
 
 ;exit when done reading
   cmp ecx, 0            ;check if bytes remain
@@ -61,14 +62,14 @@ _start:
   jnz parityErr         ;print error if ascii byte count is odd
 
 ;prepare registers for translation
-  lea esi, [inBuff-1]   ;load addr of byte before input buffer to ESI
-  lea edi, [outBuff-1]  ;load addr of byte before output buffer to EDI
+  lea esi, [inBuf-1]    ;load addr of byte before input buffer to ESI
+  lea edi, [outBuf-1]   ;load addr of byte before output buffer to EDI
   shr ecx, 1            ;adjust (div by 2) ascii byte count to raw byte count
   call translate        ;translate hex to raw binary
 
 ;print translated bytes
   mov edx, ecx          ;pass num bytes to read (byte count)
-  call printBuff        ;print outBuff
+  call printBuf         ;print outBuf
   jmp _start            ;jump up to the beginning to read more
 
 ;print error message
