@@ -54,12 +54,12 @@ GLOBAL inBuf, outBuf
 ;              the byte that it represnts using the translation table, raw.
 ;              The resultant bytes are written to outBuf.  All ASCII characters
 ;              which are not hexidecimal digits are translated to ':' (3Ah).
-;              
 
 translate:
 
   ;save caller's state
-  pushad                ;store registers
+  push ecx              ;store ECX
+  push edx              ;store EDX
 
   .loop:
     ;grab low-order nybble (ie. hex digit)
@@ -67,14 +67,14 @@ translate:
     mov al, byte[esi+ecx*2]   ;load byte for translation
     mov al, byte[raw+eax]   ;translate current byte
     cmp al, 3Ah         ;compare current byte to ':' (error char)
-;    je  inputErr        ;print error  if invalid char is detected
+    je  .error          ;return offset of invalid byte
 
     ;grab high-order nybble (ie. hex digit)
     xor edx, edx        ;clear edx
     mov dl, byte[esi+ecx*2-1]   ;load byte for translation
     mov dl, byte[raw+edx]   ;translate current byte
     cmp dl, 3Ah         ;compare current byte to ':' (error char)
-;    je  inputErr        ;print error  if invalid char is detected
+    je  .error          ;return offset of invalid byte
 
     ;store raw byte
     mov ah, dl          ;load high-order nybble to AH
@@ -84,10 +84,18 @@ translate:
 
     ;prepare to loop
     dec ecx             ;decrement raw byte count
-    jnz .loop           ;loop  if bytes remain
+    jnz .loop           ;loop if bytes remain
+    xor eax, eax        ;error code 0 = no errors
+    jmp .prologue       ;jump to return
+
+  ;return an error code
+  .error:
+    mov eax, esi        ;load error code into EAX
 
   ;prepare to return
-  popad                 ;restore registers
+  .prologue:
+  pop edx               ;restore EDX
+  pop ecx               ;restore ECX
   ret                   ;return to caller
 
 

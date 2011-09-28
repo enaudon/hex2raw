@@ -67,6 +67,10 @@ _start:
   shr ecx, 1            ;adjust (div by 2) ascii byte count to raw byte count
   call translate        ;translate hex to raw binary
 
+;check error codes
+  cmp eax, 0            ;check if all bytes were valid
+  jne inputErr          ;print error if invalid byte was detected
+
 ;print translated bytes
   mov edx, ecx          ;pass num bytes to read (byte count)
   call printBuf         ;print outBuf
